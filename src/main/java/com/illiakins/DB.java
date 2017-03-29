@@ -174,7 +174,7 @@ public class DB {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-		Integer id = null;
+		int id = 0;
 
 		final StringBuilder builderPlaceholder = new StringBuilder("(");
 		for ( int i = 0; i < paramList.get(0).size(); i++ ) {
