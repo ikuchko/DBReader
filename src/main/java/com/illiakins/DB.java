@@ -170,7 +170,7 @@ public class DB {
 		return generatedKey;
 	}
 
-	public static int executeUpdateBatch(String sqlQuery, List<List<Object>> paramList) throws SQLException {
+	public static int executeUpdateBatch(String sqlQuery, String subQuery, List<List<Object>> paramList) throws SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
@@ -191,6 +191,7 @@ public class DB {
 			}
 			builder.append(insertPlaceholders);
 		}
+		if (!subQuery.equals("")) builder.append(" ").append(subQuery);
 		try {
 			connection = getConnection();
 			statement = connection.prepareStatement(builder.toString(), Statement.RETURN_GENERATED_KEYS);
@@ -202,15 +203,19 @@ public class DB {
 			}
 			statement.execute();
 			resultSet = statement.getGeneratedKeys();
-            if (resultSet.next()) {
-                id = resultSet.getInt(1);
-            }
+			if (resultSet.next()) {
+				id = resultSet.getInt(1);
+			}
 		} catch (SQLException e) {
 			LOG.error("SQL error occurred", e);
 		} finally {
 			closeConnection(connection, statement, null);
 		}
 		return id;
+	}
+
+	public static int executeUpdateBatch(String sqlQuery, List<List<Object>> paramList) throws SQLException {
+		return executeUpdateBatch(sqlQuery, "", paramList);
 	}
 
     public static void closeConnection(Connection connection, Statement statement, ResultSet resultSet) {
