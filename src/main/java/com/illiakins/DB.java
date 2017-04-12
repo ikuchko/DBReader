@@ -15,23 +15,23 @@ public class DB {
 	private static final Logger LOG = Logger.getLogger(DB.class);
 	private static DataSource dataSource;
 
-	public DB(String jdbcUrl, String userName, String password) {
+	public DB(String jdbcUrl, String userName, String password, int minimumIdle, int maxPoolSize, long leakDetectionThreshold, long connTimeout, long idleTimeout, long maxLifetime) {
 		if (dataSource == null) {
 			LOG.debug("CREATE NEW CONNECTION POOL");
 			HikariConfig config = new HikariConfig();
 			config.setJdbcUrl(jdbcUrl);
 			config.setUsername(userName);
 			config.setPassword(password);
-			config.setMinimumIdle(10);
-			config.setMaximumPoolSize(20);
+			config.setMinimumIdle(minimumIdle);
+			config.setMaximumPoolSize(maxPoolSize);
 			config.setAutoCommit(true);
 			config.addDataSourceProperty("cachePrepStmts", "true");
 			config.addDataSourceProperty("prepStmtCacheSize", "250");
 			config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-			config.setLeakDetectionThreshold(2500); // 2.5 seconds
-			config.setConnectionTimeout(5000); // 5 seconds
-			config.setIdleTimeout(900_000); // 15 minutes
-			config.setMaxLifetime(28_440_000); // 7.9 hours
+			config.setLeakDetectionThreshold(leakDetectionThreshold); // example (2500) 2.5 seconds
+			config.setConnectionTimeout(connTimeout); // example default(5000) 5 seconds
+			config.setIdleTimeout(idleTimeout); // example (900_000) 15 minutes
+			config.setMaxLifetime(maxLifetime); // example (28_440_000) 7.9 hours
 			dataSource = new HikariDataSource(config);
 		}
 	}
@@ -216,6 +216,22 @@ public class DB {
 
 	public static int executeUpdateBatch(String sqlQuery, List<List<Object>> paramList) throws SQLException {
 		return executeUpdateBatch(sqlQuery, "", paramList);
+	}
+
+	public static void execStoredProcedure(String procName, List<Object> params) throws SQLException {
+		Connection connection = null;
+		CallableStatement statement = null;
+		try {
+			connection = getConnection();
+			statement = connection.prepareCall("{ call " + procName + " }");
+			int parameterIndex = 1;
+			for (Object param : params) {
+				statement.setObject(parameterIndex++, param);
+			}
+			statement.execute();
+		} finally {
+			closeConnection(connection, statement, null);
+		}
 	}
 
     public static void closeConnection(Connection connection, Statement statement, ResultSet resultSet) {
