@@ -3,9 +3,11 @@ package com.illiakins;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.pool.HikariPool;
 import org.apache.log4j.Logger;
 
 import javax.sql.DataSource;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,7 +17,7 @@ public class DB {
 	private static final Logger LOG = Logger.getLogger(DB.class);
 	private static DataSource dataSource;
 
-	public DB(String jdbcUrl, String userName, String password, int minimumIdle, int maxPoolSize, long leakDetectionThreshold, long connTimeout, long idleTimeout, long maxLifetime) {
+	public DB(String jdbcUrl, String userName, String password, int minimumIdle, int maxPoolSize, long leakDetectionThreshold, long connTimeout, long idleTimeout, long maxLifetime) throws HikariPool.PoolInitializationException {
 		if (dataSource == null) {
 			LOG.debug("CREATE NEW CONNECTION POOL");
 			HikariConfig config = new HikariConfig();

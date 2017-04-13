@@ -42,6 +42,10 @@ public class PropertiesReader {
         return dynamicPropertyFactory.getBooleanProperty(settingName, false).get();
     }
 
+    public static  long getLongSetting(String settingName){
+        return dynamicPropertyFactory.getLongProperty(settingName, 0).get();
+    }
+
     public static String[] getArraySetting(String settingName){
         return getStringSetting(settingName).split(",");
     }
