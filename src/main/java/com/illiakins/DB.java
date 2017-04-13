@@ -7,6 +7,7 @@ import com.zaxxer.hikari.pool.HikariPool;
 import org.apache.log4j.Logger;
 
 import javax.sql.DataSource;
+import javax.xml.crypto.Data;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.ArrayList;
@@ -235,6 +236,11 @@ public class DB {
 			closeConnection(connection, statement, null);
 		}
 	}
+
+	public static void closeDBPool() throws SQLException {
+        dataSource.unwrap(HikariDataSource.class).close();
+        dataSource = null;
+    }
 
     public static void closeConnection(Connection connection, Statement statement, ResultSet resultSet) {
         try {
