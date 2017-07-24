@@ -118,6 +118,7 @@ Thumbs.db
 **/.idea/uiDesigner.xml
 **/.idea/codeStyleSettings.xml
 **/.idea/kotlinc.xml
+**/.idea/dbnavigator.xml
 
 .gradle
 build/

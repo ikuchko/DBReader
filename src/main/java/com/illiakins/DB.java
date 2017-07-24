@@ -221,6 +221,47 @@ public class DB {
 		return executeUpdateBatch(sqlQuery, "", paramList);
 	}
 
+	public static int executeUpdateBatchReturnUpdatesAmount(String sqlQuery, String subQuery, List<List<Object>>
+			paramList)
+			throws SQLException {
+		Connection connection = null;
+		PreparedStatement statement = null;
+		int amountOfUpdatedRows = 0;
+
+		final StringBuilder builderPlaceholder = new StringBuilder("(");
+		for ( int i = 0; i < paramList.get(0).size(); i++ ) {
+			if ( i != 0 ) {
+				builderPlaceholder.append(",");
+			}
+			builderPlaceholder.append("?");
+		}
+		String insertPlaceholders = builderPlaceholder.append(")").toString();
+		final StringBuilder builder = new StringBuilder(sqlQuery);
+		for ( int i = 0; i < paramList.size(); i++ ) {
+			if ( i != 0 ) {
+				builder.append(",");
+			}
+			builder.append(insertPlaceholders);
+		}
+		if (!subQuery.equals("")) builder.append(" ").append(subQuery);
+		try {
+			connection = getConnection();
+			statement = connection.prepareStatement(builder.toString(), Statement.RETURN_GENERATED_KEYS);
+			int parameterIndex = 1;
+			for (List<Object> param : paramList) {
+				for (Object value : param) {
+					statement.setObject(parameterIndex++, value);
+				}
+			}
+			amountOfUpdatedRows = statement.executeUpdate();
+		} catch (SQLException e) {
+			LOG.error("SQL error occurred", e);
+		} finally {
+			closeConnection(connection, statement, null);
+		}
+		return amountOfUpdatedRows;
+	}
+
 	public static void execStoredProcedure(String procName, List<Object> params) throws SQLException {
 		Connection connection = null;
 		CallableStatement statement = null;
@@ -238,8 +279,10 @@ public class DB {
 	}
 
 	public static void closeDBPool() throws SQLException {
-        dataSource.unwrap(HikariDataSource.class).close();
-        dataSource = null;
+	    if (dataSource != null) {
+            dataSource.unwrap(HikariDataSource.class).close();
+            dataSource = null;
+        }
     }
 
     public static void closeConnection(Connection connection, Statement statement, ResultSet resultSet) {
