@@ -173,11 +173,13 @@ public class DB {
 		return generatedKey;
 	}
 
-	public static int executeUpdateBatch(String sqlQuery, String subQuery, List<List<Object>> paramList) throws SQLException {
+	public static HashMap<String, Integer> executeUpdateBatch(String sqlQuery, String subQuery, List<List<Object>>
+			paramList) throws
+			SQLException {
 		Connection connection = null;
 		PreparedStatement statement = null;
 		ResultSet resultSet = null;
-		int id = 0;
+		HashMap<String, Integer> result = new HashMap<>();
 
 		final StringBuilder builderPlaceholder = new StringBuilder("(");
 		for ( int i = 0; i < paramList.get(0).size(); i++ ) {
@@ -205,61 +207,21 @@ public class DB {
 				}
 			}
 			statement.execute();
+			result.put("affected", statement.getUpdateCount());
 			resultSet = statement.getGeneratedKeys();
 			if (resultSet.next()) {
-				id = resultSet.getInt(1);
+				result.put("id", resultSet.getInt(1));
 			}
 		} catch (SQLException e) {
 			LOG.error("SQL error occurred", e);
 		} finally {
 			closeConnection(connection, statement, null);
 		}
-		return id;
+		return result;
 	}
 
-	public static int executeUpdateBatch(String sqlQuery, List<List<Object>> paramList) throws SQLException {
+	public static HashMap<String, Integer> executeUpdateBatch(String sqlQuery, List<List<Object>> paramList) throws SQLException {
 		return executeUpdateBatch(sqlQuery, "", paramList);
-	}
-
-	public static int executeUpdateBatchReturnUpdatesAmount(String sqlQuery, String subQuery, List<List<Object>>
-			paramList)
-			throws SQLException {
-		Connection connection = null;
-		PreparedStatement statement = null;
-		int amountOfUpdatedRows = 0;
-
-		final StringBuilder builderPlaceholder = new StringBuilder("(");
-		for ( int i = 0; i < paramList.get(0).size(); i++ ) {
-			if ( i != 0 ) {
-				builderPlaceholder.append(",");
-			}
-			builderPlaceholder.append("?");
-		}
-		String insertPlaceholders = builderPlaceholder.append(")").toString();
-		final StringBuilder builder = new StringBuilder(sqlQuery);
-		for ( int i = 0; i < paramList.size(); i++ ) {
-			if ( i != 0 ) {
-				builder.append(",");
-			}
-			builder.append(insertPlaceholders);
-		}
-		if (!subQuery.equals("")) builder.append(" ").append(subQuery);
-		try {
-			connection = getConnection();
-			statement = connection.prepareStatement(builder.toString(), Statement.RETURN_GENERATED_KEYS);
-			int parameterIndex = 1;
-			for (List<Object> param : paramList) {
-				for (Object value : param) {
-					statement.setObject(parameterIndex++, value);
-				}
-			}
-			amountOfUpdatedRows = statement.executeUpdate();
-		} catch (SQLException e) {
-			LOG.error("SQL error occurred", e);
-		} finally {
-			closeConnection(connection, statement, null);
-		}
-		return amountOfUpdatedRows;
 	}
 
 	public static void execStoredProcedure(String procName, List<Object> params) throws SQLException {
