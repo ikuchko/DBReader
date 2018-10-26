@@ -2,7 +2,8 @@ package com.illiakins;
 
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicPropertyFactory;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -10,7 +11,7 @@ import java.io.IOException;
  * Created by Illiak on 2/1/2017.
  */
 public class PropertiesReader {
-    private static final Logger LOG = Logger.getLogger(PropertiesReader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PropertiesReader.class);
     private static DynamicPropertyFactory dynamicPropertyFactory;
 
     static {
