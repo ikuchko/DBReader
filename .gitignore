@@ -119,6 +119,7 @@ Thumbs.db
 **/.idea/codeStyleSettings.xml
 **/.idea/kotlinc.xml
 **/.idea/dbnavigator.xml
+**/.idea/encodings.xml
 
 .gradle
 build/
