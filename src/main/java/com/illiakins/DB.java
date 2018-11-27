@@ -17,6 +17,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,6 +173,11 @@ public class DB {
         return executeQuery("default", sqlQuery, params);
     }
 
+    public static List<HashMap<String, Object>> executeQuery(String dataSourceName, String sqlQuery,
+            Object... parameters) throws SQLException {
+        return executeQuery("default", sqlQuery, varargsToList(parameters));
+    }
+
     public static int executeUpdate(String dataSourceName, String sqlQuery) throws SQLException {
         Connection connection = null;
         Statement statement = null;
@@ -238,6 +244,10 @@ public class DB {
 
     public static int executeUpdate(String sqlQuery, List<Object> params) throws SQLException {
         return executeUpdate("default", sqlQuery, params);
+    }
+
+    public static int executeUpdate(String sqlQuery, Object... parameters) throws SQLException {
+        return executeUpdate("default", sqlQuery, varargsToList(parameters));
     }
 
     public static HashMap<String, Integer> executeUpdateBatch(String sqlQuery, String subQuery,
@@ -320,6 +330,10 @@ public class DB {
 
     public static void execStoredProcedure(String procName, List<Object> params) throws SQLException {
         execStoredProcedure("default", procName, params);
+    }
+
+    public static List<Object> varargsToList(Object... parameters) {
+        return new ArrayList<>(Arrays.asList(parameters));
     }
 
     public static void closeDBPool(String dataSourceName) throws SQLException {
