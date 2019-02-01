@@ -125,6 +125,48 @@ public class DB {
         return list;
     }
 
+    public static String executeQueryReturningSingleString(String sqlQuery) throws SQLException {
+        return executeQueryReturningSingleString("default", sqlQuery);
+    }
+
+    public static String executeQueryReturningSingleString(String dataSourceName, String sqlQuery) throws SQLException {
+        String result = null;
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = getConnection(dataSourceName);
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(sqlQuery);
+            resultSet.first();
+            result = resultSet.getString(1);
+        } finally {
+            closeConnection(connection, statement, resultSet);
+        }
+        return result;
+    }
+
+    public static Integer executeQueryReturningSingleInteger(String sqlQuery) throws SQLException {
+        return executeQueryReturningSingleInteger("default", sqlQuery);
+    }
+
+    public static Integer executeQueryReturningSingleInteger(String dataSourceName, String sqlQuery) throws SQLException {
+        Integer result = null;
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = getConnection(dataSourceName);
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(sqlQuery);
+            resultSet.first();
+            result = resultSet.getInt(1);
+        } finally {
+            closeConnection(connection, statement, resultSet);
+        }
+        return result;
+    }
+
     public static List<HashMap<String, Object>> executeQuery(String dataSourceName, String sqlQuery)
             throws SQLException {
         Connection connection = null;
@@ -168,6 +210,7 @@ public class DB {
 
         return result;
     }
+
 
     public static List<HashMap<String, Object>> executeQuery(String sqlQuery, List<Object> params) throws SQLException {
         return executeQuery("default", sqlQuery, params);
