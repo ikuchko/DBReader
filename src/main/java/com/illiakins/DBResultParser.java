@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by Illiak on 11/22/2016.
@@ -20,15 +21,23 @@ public class DBResultParser {
 
     public Integer getInt(String key) throws SQLException {
         if (!resultRow.containsKey(key)) {
-            throw new SQLException("ResultSet does not contain column with name '" + key +"'");
+            throw new SQLException("ResultSet does not contain column name '" + key +"'");
         }
         if (resultRow.get(key) == null || resultRow.get(key).equals("")) return null;
         return Integer.valueOf(resultRow.get(key).toString());
     }
 
+    public Double getDouble(String key) throws SQLException {
+        if (!resultRow.containsKey(key)) {
+            throw new SQLException("ResultSet does not contain column name '" + key +"'");
+        }
+        if (resultRow.get(key) == null || resultRow.get(key).equals("")) return null;
+        return Double.valueOf(resultRow.get(key).toString());
+    }
+
     public String getString(String key) throws SQLException {
         if (!resultRow.containsKey(key)) {
-            throw new SQLException("ResultSet does not contain column with name '" + key +"'");
+            throw new SQLException("ResultSet does not contain column name '" + key +"'");
         }
         if (resultRow.get(key) == null || resultRow.get(key).equals("")) return null;
         return String.valueOf(resultRow.get(key));
@@ -36,7 +45,7 @@ public class DBResultParser {
 
     public Boolean getBool(String key) throws SQLException {
         if (!resultRow.containsKey(key)) {
-            throw new SQLException("ResultSet does not contain column with name '" + key +"'");
+            throw new SQLException("ResultSet does not contain column name '" + key +"'");
         }
         if (resultRow.get(key) == null || resultRow.get(key).equals("")) return null;
         return (Boolean.valueOf(resultRow.get(key).toString()) || resultRow.get(key).toString().equals("1"));
@@ -44,7 +53,7 @@ public class DBResultParser {
 
     public LocalDate getLocalDate(String key) throws SQLException {
         if (!resultRow.containsKey(key)) {
-            throw new SQLException("ResultSet does not contain column with name '" + key +"'");
+            throw new SQLException("ResultSet does not contain column name '" + key +"'");
         }
         if (resultRow.get(key) == null || resultRow.get(key).equals("")) return null;
         return LocalDate.parse(resultRow.get(key).toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
@@ -52,7 +61,7 @@ public class DBResultParser {
 
     public LocalDate getLocalDate(String key, DateTimeFormatter dateTimeFormatter) throws SQLException {
         if (!resultRow.containsKey(key)) {
-            throw new SQLException("ResultSet does not contain column with name '" + key +"'");
+            throw new SQLException("ResultSet does not contain column name '" + key +"'");
         }
         if (resultRow.get(key) == null || resultRow.get(key).equals("")) return null;
         return LocalDate.parse(resultRow.get(key).toString(), dateTimeFormatter);
@@ -60,7 +69,7 @@ public class DBResultParser {
 
     public LocalDateTime getLocalDateTime(String key) throws SQLException {
         if (!resultRow.containsKey(key)) {
-            throw new SQLException("ResultSet does not contain column with name '" + key +"'");
+            throw new SQLException("ResultSet does not contain column name '" + key +"'");
         }
         if (resultRow.get(key) == null || resultRow.get(key).equals("")) return null;
         return LocalDateTime.parse(resultRow.get(key).toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.S"));
@@ -68,10 +77,37 @@ public class DBResultParser {
 
     public LocalDateTime getLocalDateTime(String key, DateTimeFormatter dateTimeFormatter) throws SQLException {
         if (!resultRow.containsKey(key)) {
-            throw new SQLException("ResultSet does not contain column with name '" + key +"'");
+            throw new SQLException("ResultSet does not contain column name '" + key +"'");
         }
         if (resultRow.get(key) == null || resultRow.get(key).equals("")) return null;
         return LocalDateTime.parse(resultRow.get(key).toString(), dateTimeFormatter);
+    }
+
+    public static Integer getCount(List<HashMap<String, Object>> dbResult, String columnName) throws SQLException {
+        List<DBResultParser> resultSet = getResultSet(dbResult);
+        if (resultSet.size() == 0 || resultSet.size() > 1 || !resultSet.get(0).getResultHashMap()
+                .containsKey(columnName)) {
+            return null;
+        }
+        return resultSet.get(0).getInt(columnName);
+    }
+
+    /**
+     * Returns *Integer* of the first found column which contains "count" in the name OR the first available column
+     * @param dbResult the list of HashMaps with a result of requested data from a DataBase
+     * @returnReturns *Integer* of the first found column which contains "count" in the name OR the first available column
+     * @throws SQLException if resultSet is empty or contains more than 1 record
+     */
+    public static Integer getCount(List<HashMap<String, Object>> dbResult) throws SQLException {
+        List<DBResultParser> resultSet = getResultSet(dbResult);
+        if (resultSet.size() == 0 || resultSet.size() > 1) {
+            throw new SQLException("ResultSet is empty or contains more then 1 record");
+        }
+        List<String> keys = resultSet.get(0).getResultHashMap().keySet().stream().map(String::toLowerCase)
+                .collect(Collectors.toList());
+        String key = keys.get(0);
+        key = keys.stream().filter(s -> s.contains("count")).findFirst().orElse(key);
+        return resultSet.get(0).getInt(key);
     }
 
     public HashMap<String, Object> getResultHashMap() {
