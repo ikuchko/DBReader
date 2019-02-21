@@ -92,10 +92,20 @@ public class DBResultParser {
         return resultSet.get(0).getInt(columnName);
     }
 
+    public HashMap<String, Object> getResultHashMap() {
+        return resultRow;
+    }
+
+    public static List<DBResultParser> getResultSet(List<HashMap<String, Object>> dbResult) {
+        List<DBResultParser> resultList = new ArrayList<>();
+        dbResult.forEach(resultDB -> resultList.add(new DBResultParser(resultDB)));
+        return resultList;
+    }
+
     /**
      * Returns *Integer* of the first found column which contains "count" in the name OR the first available column
      * @param dbResult the list of HashMaps with a result of requested data from a DataBase
-     * @returnReturns *Integer* of the first found column which contains "count" in the name OR the first available column
+     * @return *Integer* of the first found column which contains "count" in the name OR the first available column
      * @throws SQLException if resultSet is empty or contains more than 1 record
      */
     public static Integer getCount(List<HashMap<String, Object>> dbResult) throws SQLException {
@@ -110,13 +120,17 @@ public class DBResultParser {
         return resultSet.get(0).getInt(key);
     }
 
-    public HashMap<String, Object> getResultHashMap() {
-        return resultRow;
-    }
-
-    public static List<DBResultParser> getResultSet(List<HashMap<String, Object>> dbResult) {
-        List<DBResultParser> resultList = new ArrayList<>();
-        dbResult.forEach(resultDB -> resultList.add(new DBResultParser(resultDB)));
-        return resultList;
+    /**
+     * Returns a first record from the resultSet if available, or NULL otherwise
+     * @param dbResult the list of HashMaps with a result of requested data from a DataBase
+     * @return first record from the resultSet if available, or NULL otherwise
+     */
+    public static DBResultParser getFirstRecord(List<HashMap<String, Object>> dbResult) {
+        List<DBResultParser> resultSet = getResultSet(dbResult);
+        if (resultSet.size() > 0) {
+            return resultSet.get(0);
+        } else {
+            return null;
+        }
     }
 }
