@@ -110,6 +110,26 @@ public class DB {
         return conn;
     }
 
+    public static Connection getConnectionForTransaction(String dataSourceName) {
+        Connection result = getConnection(dataSourceName);
+        try {
+            result.setAutoCommit(false);
+        } catch (SQLException e) {
+            LOG.debug("Error getting connection for transaction.", e);
+            result = null;
+        }
+        return result;
+    }
+
+    public static void releaseConnectionForTransaction(Connection connection) {
+        try {
+            connection.setAutoCommit(true);
+            connection.close();
+        } catch (SQLException e) {
+            LOG.debug("Error releasing connection for transaction.", e);
+        }
+    }
+
     private static List<HashMap<String, Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
         ResultSetMetaData md = rs.getMetaData();
         int columns = md.getColumnCount();
@@ -193,6 +213,31 @@ public class DB {
             }
         } finally {
             closeConnection(connection, statement, resultSet);
+        }
+        return generatedKey;
+    }
+
+    public static int executeUpdate(Connection connection, String sqlQuery, List<Object> params) throws SQLException {
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        int generatedKey = 0;
+        try {
+            statement = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS);
+            int parameterIndex = 1;
+            for (Object param : params) {
+                statement.setObject(parameterIndex++, param);
+            }
+            int retval = statement.executeUpdate();
+            resultSet = statement.getGeneratedKeys();
+            if (resultSet.next()) {
+                generatedKey = resultSet.getInt(1);
+            }
+            if (generatedKey == 0) {
+                //If it was an update/delete statement return the # of row affected instead of the generated keys.
+                generatedKey = retval;
+            }
+        } finally {
+            closeResultSet(statement, resultSet);
         }
         return generatedKey;
     }
@@ -358,6 +403,19 @@ public class DB {
             }
             if (connection != null) {
                 connection.close();
+            }
+        } catch (SQLException e) {
+            LOG.error("SQL error occurred during closing a connection", e);
+        }
+    }
+
+    public static void closeResultSet(Statement statement, ResultSet resultSet) {
+        try {
+            if (resultSet != null) {
+                resultSet.close();
+            }
+            if (statement != null) {
+                statement.close();
             }
         } catch (SQLException e) {
             LOG.error("SQL error occurred during closing a connection", e);
