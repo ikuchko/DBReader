@@ -276,7 +276,7 @@ public class DB {
      * Connection must be closed in the end of all transactions by calling releaseConnectionForTransaction()
      */
     public static HashMap<String, Integer> executeUpdateBatch(Connection connection, String sqlQuery, String subQuery,
-            List<List<Object>> paramList, String dataSourceName) throws SQLException {
+            List<List<Object>> paramList) throws SQLException {
         PreparedStatement statement = null;
         ResultSet resultSet = null;
         HashMap<String, Integer> result = new HashMap<>();
@@ -325,7 +325,7 @@ public class DB {
         HashMap<String, Integer> result = new HashMap<>();
         if (connection != null) {
             try {
-                result = executeUpdateBatch(connection, sqlQuery, subQuery, paramList, dataSourceName);
+                result = executeUpdateBatch(connection, sqlQuery, subQuery, paramList);
             } finally {
                 close(connection, null, null);
             }
