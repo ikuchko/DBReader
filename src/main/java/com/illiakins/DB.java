@@ -207,10 +207,6 @@ public class DB {
         return executeQuery("default", sqlQuery, varargsToList(parameters));
     }
 
-    public static int executeUpdate(String sqlQuery) throws SQLException {
-        return executeUpdate("default", sqlQuery);
-    }
-
     /**
      * Keeps the connection open.
      * Use for controlling transactions.
@@ -241,6 +237,10 @@ public class DB {
         return generatedKey;
     }
 
+    public static int executeUpdate(Connection connection, String sqlQuery) throws SQLException {
+        return executeUpdate(connection, sqlQuery, new ArrayList<>());
+    }
+
     public static int executeUpdate(String dataSourceName, String sqlQuery, List<Object> params) throws SQLException {
         Connection connection = getConnection(dataSourceName);
         int generatedKey = -1;
@@ -264,6 +264,10 @@ public class DB {
 
     public static int executeUpdate(String sqlQuery, Object... parameters) throws SQLException {
         return executeUpdate("default", sqlQuery, varargsToList(parameters));
+    }
+
+    public static int executeUpdate(String sqlQuery) throws SQLException {
+        return executeUpdate("default", sqlQuery);
     }
 
     /**
