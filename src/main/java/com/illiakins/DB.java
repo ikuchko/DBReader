@@ -130,8 +130,14 @@ public class DB {
     }
 
     public static void releaseConnectionForTransaction(Connection connection) {
+        releaseConnectionForTransaction(connection, true);
+    }
+
+    public static void releaseConnectionForTransaction(Connection connection, Boolean makeCommit) {
         try {
-            connection.setAutoCommit(true);
+            if (makeCommit) {
+                connection.setAutoCommit(true);
+            }
         } catch (SQLException e) {
             LOG.debug("Error releasing connection for transaction.", e);
         } finally {
