@@ -110,23 +110,32 @@ public class DB {
         return conn;
     }
 
+    public static Connection getConnectionForTransaction() {
+        return getConnectionForTransaction("default");
+    }
+
     public static Connection getConnectionForTransaction(String dataSourceName) {
-        Connection result = getConnection(dataSourceName);
+        Connection connection = getConnection(dataSourceName);
+        if (connection == null) {
+            LOG.error("Can not retrieve a connection for `{}` dataSourceName", dataSourceName);
+            return null;
+        }
         try {
-            result.setAutoCommit(false);
+            connection.setAutoCommit(false);
         } catch (SQLException e) {
             LOG.debug("Error getting connection for transaction.", e);
-            result = null;
+            connection = null;
         }
-        return result;
+        return connection;
     }
 
     public static void releaseConnectionForTransaction(Connection connection) {
         try {
             connection.setAutoCommit(true);
-            connection.close();
         } catch (SQLException e) {
             LOG.debug("Error releasing connection for transaction.", e);
+        } finally {
+            close(connection, null, null);
         }
     }
 
@@ -157,7 +166,7 @@ public class DB {
             resultSet = statement.executeQuery(sqlQuery);
             result = resultSetToArrayList(resultSet);
         } finally {
-            closeConnection(connection, statement, resultSet);
+            close(connection, statement, resultSet);
         }
 
         return result;
@@ -183,7 +192,7 @@ public class DB {
             resultSet = statement.executeQuery();
             result = resultSetToArrayList(resultSet);
         } finally {
-            closeConnection(connection, statement, resultSet);
+            close(connection, statement, resultSet);
         }
 
         return result;
@@ -198,25 +207,15 @@ public class DB {
         return executeQuery("default", sqlQuery, varargsToList(parameters));
     }
 
-    public static int executeUpdate(String dataSourceName, String sqlQuery) throws SQLException {
-        Connection connection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
-        int generatedKey = 0;
-        try {
-            connection = getConnection(dataSourceName);
-            statement = connection.createStatement();
-            statement.executeUpdate(sqlQuery, Statement.RETURN_GENERATED_KEYS);
-            resultSet = statement.getGeneratedKeys();
-            if (resultSet.next()) {
-                generatedKey = resultSet.getInt(1);
-            }
-        } finally {
-            closeConnection(connection, statement, resultSet);
-        }
-        return generatedKey;
+    public static int executeUpdate(String sqlQuery) throws SQLException {
+        return executeUpdate("default", sqlQuery);
     }
 
+    /**
+     * Keeps the connection open.
+     * Use for controlling transactions.
+     * Connection must be closed in the end of all transactions by calling releaseConnectionForTransaction()
+     */
     public static int executeUpdate(Connection connection, String sqlQuery, List<Object> params) throws SQLException {
         PreparedStatement statement = null;
         ResultSet resultSet = null;
@@ -237,54 +236,26 @@ public class DB {
                 generatedKey = retval;
             }
         } finally {
-            closeResultSet(statement, resultSet);
+            close(null, statement, resultSet);
         }
         return generatedKey;
-    }
-
-    public static int executeUpdate(String sqlQuery) throws SQLException {
-        return executeUpdate("default", sqlQuery);
-    }
-
-    public static int executeUpdate(String dataSourceName, String sqlQuery, Boolean updating) throws SQLException {
-        Connection connection = null;
-        Statement statement = null;
-        int amountOfUpdatedRows = 0;
-        try {
-            connection = getConnection(dataSourceName);
-            statement = connection.createStatement();
-            amountOfUpdatedRows = statement.executeUpdate(sqlQuery);
-        } finally {
-            closeConnection(connection, statement, null);
-        }
-        return amountOfUpdatedRows;
-    }
-
-    public static int executeUpdate(String sqlQuery, Boolean updating) throws SQLException {
-        return executeUpdate("default", sqlQuery, updating);
     }
 
     public static int executeUpdate(String dataSourceName, String sqlQuery, List<Object> params) throws SQLException {
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet resultSet = null;
-        int generatedKey = 0;
-        try {
-            connection = getConnection(dataSourceName);
-            statement = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS);
-            int parameterIndex = 1;
-            for (Object param : params) {
-                statement.setObject(parameterIndex++, param);
+        Connection connection = getConnection(dataSourceName);
+        int generatedKey = -1;
+        if (connection != null) {
+            try {
+                generatedKey = executeUpdate(connection, sqlQuery, params);
+            } finally {
+                close(connection, null, null);
             }
-            statement.executeUpdate();
-            resultSet = statement.getGeneratedKeys();
-            if (resultSet.next()) {
-                generatedKey = resultSet.getInt(1);
-            }
-        } finally {
-            closeConnection(connection, statement, resultSet);
         }
         return generatedKey;
+    }
+
+    public static int executeUpdate(String dataSourceName, String sqlQuery) throws SQLException {
+        return executeUpdate(dataSourceName, sqlQuery, new ArrayList<>());
     }
 
     public static int executeUpdate(String sqlQuery, List<Object> params) throws SQLException {
@@ -295,9 +266,13 @@ public class DB {
         return executeUpdate("default", sqlQuery, varargsToList(parameters));
     }
 
-    public static HashMap<String, Integer> executeUpdateBatch(String sqlQuery, String subQuery,
+    /**
+     * Keeps the connection open.
+     * Use for controlling transactions.
+     * Connection must be closed in the end of all transactions by calling releaseConnectionForTransaction()
+     */
+    public static HashMap<String, Integer> executeUpdateBatch(Connection connection, String sqlQuery, String subQuery,
             List<List<Object>> paramList, String dataSourceName) throws SQLException {
-        Connection connection = null;
         PreparedStatement statement = null;
         ResultSet resultSet = null;
         HashMap<String, Integer> result = new HashMap<>();
@@ -321,7 +296,6 @@ public class DB {
             builder.append(" ").append(subQuery);
         }
         try {
-            connection = getConnection(dataSourceName);
             statement = connection.prepareStatement(builder.toString(), Statement.RETURN_GENERATED_KEYS);
             int parameterIndex = 1;
             for (List<Object> param : paramList) {
@@ -336,7 +310,21 @@ public class DB {
                 result.put("id", resultSet.getInt(1));
             }
         } finally {
-            closeConnection(connection, statement, null);
+            close(null, statement, null);
+        }
+        return result;
+    }
+
+    public static HashMap<String, Integer> executeUpdateBatch(String sqlQuery, String subQuery,
+            List<List<Object>> paramList, String dataSourceName) throws SQLException {
+        Connection connection = getConnection(dataSourceName);
+        HashMap<String, Integer> result = new HashMap<>();
+        if (connection != null) {
+            try {
+                result = executeUpdateBatch(connection, sqlQuery, subQuery, paramList, dataSourceName);
+            } finally {
+                close(connection, null, null);
+            }
         }
         return result;
     }
@@ -369,7 +357,7 @@ public class DB {
             }
             statement.execute();
         } finally {
-            closeConnection(connection, statement, null);
+            close(connection, statement, null);
         }
     }
 
@@ -393,7 +381,7 @@ public class DB {
         closeDBPool("default");
     }
 
-    public static void closeConnection(Connection connection, Statement statement, ResultSet resultSet) {
+    public static void close(Connection connection, Statement statement, ResultSet resultSet) {
         try {
             if (resultSet != null) {
                 resultSet.close();
@@ -403,19 +391,6 @@ public class DB {
             }
             if (connection != null) {
                 connection.close();
-            }
-        } catch (SQLException e) {
-            LOG.error("SQL error occurred during closing a connection", e);
-        }
-    }
-
-    public static void closeResultSet(Statement statement, ResultSet resultSet) {
-        try {
-            if (resultSet != null) {
-                resultSet.close();
-            }
-            if (statement != null) {
-                statement.close();
             }
         } catch (SQLException e) {
             LOG.error("SQL error occurred during closing a connection", e);
