@@ -25,6 +25,11 @@ import java.util.Map;
 public class DB {
     private static final Logger LOG = LoggerFactory.getLogger(DB.class);
     private static Map<String, DataSource> dataSourceHashMap = new HashMap<>();
+    private static Boolean logAllQueries = false;
+
+    public static void setLogAllQueries(Boolean logAllQueries) {
+        DB.logAllQueries = logAllQueries;
+    }
 
     public DB(String jdbcUrl, String userName, String password, int minimumIdle, int maxPoolSize,
             long leakDetectionThreshold, long connTimeout, long idleTimeout, long maxLifetime)
@@ -180,6 +185,9 @@ public class DB {
             for (Object param : params) {
                 statement.setObject(parameterIndex++, param);
             }
+            if (logAllQueries) {
+                LOG.info(sqlQuery);
+            }
             resultSet = statement.executeQuery();
             result = resultSetToArrayList(resultSet);
         } finally {
@@ -206,6 +214,9 @@ public class DB {
         try {
             connection = getConnection(dataSourceName);
             statement = connection.createStatement();
+            if (logAllQueries) {
+                LOG.info(sqlQuery);
+            }
             statement.executeUpdate(sqlQuery, Statement.RETURN_GENERATED_KEYS);
             resultSet = statement.getGeneratedKeys();
             if (resultSet.next()) {
@@ -226,6 +237,9 @@ public class DB {
             int parameterIndex = 1;
             for (Object param : params) {
                 statement.setObject(parameterIndex++, param);
+            }
+            if (logAllQueries) {
+                LOG.info(sqlQuery);
             }
             int retval = statement.executeUpdate();
             resultSet = statement.getGeneratedKeys();
@@ -253,6 +267,9 @@ public class DB {
         try {
             connection = getConnection(dataSourceName);
             statement = connection.createStatement();
+            if (logAllQueries) {
+                LOG.info(sqlQuery);
+            }
             amountOfUpdatedRows = statement.executeUpdate(sqlQuery);
         } finally {
             closeConnection(connection, statement, null);
@@ -275,6 +292,9 @@ public class DB {
             int parameterIndex = 1;
             for (Object param : params) {
                 statement.setObject(parameterIndex++, param);
+            }
+            if (logAllQueries) {
+                LOG.info(sqlQuery);
             }
             statement.executeUpdate();
             resultSet = statement.getGeneratedKeys();
@@ -329,6 +349,9 @@ public class DB {
                     statement.setObject(parameterIndex++, value);
                 }
             }
+            if (logAllQueries) {
+                LOG.info(sqlQuery);
+            }
             statement.execute();
             result.put("affected", statement.getUpdateCount());
             resultSet = statement.getGeneratedKeys();
@@ -366,6 +389,9 @@ public class DB {
             int parameterIndex = 1;
             for (Object param : params) {
                 statement.setObject(parameterIndex++, param);
+            }
+            if (logAllQueries) {
+                LOG.info(procName);
             }
             statement.execute();
         } finally {

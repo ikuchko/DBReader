@@ -2,8 +2,10 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel>
-      <module name="dbreader_main" target="1.8" />
-      <module name="dbreader_test" target="1.8" />
+      <module name="com.illiakins.dbreader.main" target="1.9" />
+      <module name="com.illiakins.dbreader.test" target="1.9" />
+      <module name="dbreader_main" target="1.9" />
+      <module name="dbreader_test" target="1.9" />
     </bytecodeTargetLevel>
   </component>
 </project>
