@@ -3,6 +3,7 @@ package com.illiakins;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,6 +50,22 @@ public class DBResultParser {
         }
         if (resultRow.get(key) == null || resultRow.get(key).equals("")) return null;
         return (Boolean.valueOf(resultRow.get(key).toString()) || resultRow.get(key).toString().equals("1"));
+    }
+
+    public LocalTime getLocalTime(String key) throws SQLException {
+        if (!resultRow.containsKey(key)) {
+            throw new SQLException("ResultSet does not contain column name '" + key +"'");
+        }
+        if (resultRow.get(key) == null || resultRow.get(key).equals("")) return null;
+        return LocalTime.parse(resultRow.get(key).toString(), DateTimeFormatter.ofPattern("HH:mm:ss"));
+    }
+
+    public LocalTime getLocalTime(String key, DateTimeFormatter dateTimeFormatter) throws SQLException {
+        if (!resultRow.containsKey(key)) {
+            throw new SQLException("ResultSet does not contain column name '" + key +"'");
+        }
+        if (resultRow.get(key) == null || resultRow.get(key).equals("")) return null;
+        return LocalTime.parse(resultRow.get(key).toString(), dateTimeFormatter);
     }
 
     public LocalDate getLocalDate(String key) throws SQLException {
