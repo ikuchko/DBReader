@@ -210,7 +210,12 @@ public class DB {
 
     public static List<HashMap<String, Object>> executeQuery(String dataSourceName, String sqlQuery,
             Object... parameters) throws SQLException {
-        return executeQuery("default", sqlQuery, varargsToList(parameters));
+        return executeQuery(dataSourceName, sqlQuery, varargsToList(parameters));
+    }
+
+    public static List<HashMap<String, Object>> executeQuery(String sqlQuery,
+            Object... parameters) throws SQLException {
+        return executeQuery("default", sqlQuery, parameters);
     }
 
     /**
@@ -264,16 +269,20 @@ public class DB {
         return executeUpdate(dataSourceName, sqlQuery, new ArrayList<>());
     }
 
+    public static int executeUpdate(String sqlQuery) throws SQLException {
+        return executeUpdate("default", sqlQuery);
+    }
+
     public static int executeUpdate(String sqlQuery, List<Object> params) throws SQLException {
         return executeUpdate("default", sqlQuery, params);
     }
 
-    public static int executeUpdate(String sqlQuery, Object... parameters) throws SQLException {
-        return executeUpdate("default", sqlQuery, varargsToList(parameters));
+    public static int executeUpdate(String dataSourceName, String sqlQuery, Object... parameters) throws SQLException {
+        return executeUpdate(dataSourceName, sqlQuery, varargsToList(parameters));
     }
 
-    public static int executeUpdate(String sqlQuery) throws SQLException {
-        return executeUpdate("default", sqlQuery);
+    public static int executeUpdate(String sqlQuery, Object... parameters) throws SQLException {
+        return executeUpdate("default", sqlQuery, parameters);
     }
 
     /**
@@ -373,6 +382,15 @@ public class DB {
 
     public static void execStoredProcedure(String procName, List<Object> params) throws SQLException {
         execStoredProcedure("default", procName, params);
+    }
+
+    public static void execStoredProcedure(String dataSourceName, String procName, Object... parameters)
+            throws SQLException {
+        execStoredProcedure(dataSourceName, procName, varargsToList(parameters));
+    }
+
+    public static void execStoredProcedure(String procName, Object... parameters) throws SQLException {
+        execStoredProcedure("default", procName, parameters);
     }
 
     public static List<Object> varargsToList(Object... parameters) {
