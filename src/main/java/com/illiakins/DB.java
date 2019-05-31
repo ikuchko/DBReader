@@ -252,6 +252,10 @@ public class DB {
         return executeUpdate(connection, sqlQuery, new ArrayList<>());
     }
 
+    public static int executeUpdate(Connection connection, String sqlQuery,  Object... parameters) throws SQLException {
+        return executeUpdate(connection, sqlQuery, varargsToList(parameters));
+    }
+
     public static int executeUpdate(String dataSourceName, String sqlQuery, List<Object> params) throws SQLException {
         Connection connection = getConnection(dataSourceName);
         int generatedKey = -1;
@@ -265,6 +269,10 @@ public class DB {
         return generatedKey;
     }
 
+    public static int executeUpdate(String dataSourceName, String sqlQuery, Object... parameters) throws SQLException {
+        return executeUpdate(dataSourceName, sqlQuery, varargsToList(parameters));
+    }
+
     public static int executeUpdate(String dataSourceName, String sqlQuery) throws SQLException {
         return executeUpdate(dataSourceName, sqlQuery, new ArrayList<>());
     }
@@ -275,10 +283,6 @@ public class DB {
 
     public static int executeUpdate(String sqlQuery, List<Object> params) throws SQLException {
         return executeUpdate("default", sqlQuery, params);
-    }
-
-    public static int executeUpdate(String dataSourceName, String sqlQuery, Object... parameters) throws SQLException {
-        return executeUpdate(dataSourceName, sqlQuery, varargsToList(parameters));
     }
 
     public static int executeUpdate(String sqlQuery, Object... parameters) throws SQLException {
