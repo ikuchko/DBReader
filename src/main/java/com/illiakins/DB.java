@@ -189,6 +189,39 @@ public class DB {
         return result;
     }
 
+    public static List<HashMap<String, Object>> executeQuery(Connection connection, String sqlQuery,
+            List<Object> params) throws SQLException {
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        List result;
+        try {
+            statement = connection.prepareStatement(sqlQuery);
+            int parameterIndex = 1;
+            for (Object param : params) {
+                statement.setObject(parameterIndex++, param);
+            }
+            resultSet = statement.executeQuery();
+            result = resultSetToArrayList(resultSet);
+        } finally {
+            closeConnection(null, statement, resultSet);
+        }
+        return result;
+    }
+
+    public static List<HashMap<String, Object>> executeQuery(Connection connection, String sqlQuery) throws SQLException {
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        List result;
+        try {
+            statement = connection.prepareStatement(sqlQuery);
+            resultSet = statement.executeQuery();
+            result = resultSetToArrayList(resultSet);
+        } finally {
+            closeConnection(null, statement, resultSet);
+        }
+        return result;
+    }
+
     public static List<HashMap<String, Object>> executeQuery(String sqlQuery, List<Object> params) throws SQLException {
         return executeQuery("default", sqlQuery, params);
     }
