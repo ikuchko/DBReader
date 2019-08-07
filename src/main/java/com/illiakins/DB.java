@@ -164,8 +164,11 @@ public class DB {
 
     public static List<HashMap<String, Object>> executeQuery(String dataSourceName, String sqlQuery)
             throws SQLException {
+        List<HashMap<String, Object>> result;
         Connection connection = getConnection(dataSourceName);
-        return executeQuery(connection, sqlQuery);
+        result = executeQuery(connection, sqlQuery);
+        close(connection, null, null);
+        return result;
     }
 
     public static List<HashMap<String, Object>> executeQuery(Connection connection, String sqlQuery)
@@ -181,7 +184,7 @@ public class DB {
             resultSet = statement.executeQuery(sqlQuery);
             result = resultSetToArrayList(resultSet);
         } finally {
-            close(connection, statement, resultSet);
+            close(null, statement, resultSet);
         }
 
         return result;
@@ -193,8 +196,11 @@ public class DB {
 
     public static List<HashMap<String, Object>> executeQuery(String dataSourceName, String sqlQuery,
             List<Object> params) throws SQLException {
+        List<HashMap<String, Object>> result;
         Connection connection = getConnection(dataSourceName);
-        return executeQuery(connection, sqlQuery, params);
+        result = executeQuery(connection, sqlQuery, params);
+        close(connection, null, null);
+        return result;
     }
 
     public static List<HashMap<String, Object>> executeQuery(Connection connection, String sqlQuery,
@@ -214,7 +220,7 @@ public class DB {
             resultSet = statement.executeQuery();
             result = resultSetToArrayList(resultSet);
         } finally {
-            close(connection, statement, resultSet);
+            close(null, statement, resultSet);
         }
         return result;
     }
@@ -228,8 +234,8 @@ public class DB {
         return executeQuery(dataSourceName, sqlQuery, varargsToList(parameters));
     }
 
-    public static List<HashMap<String, Object>> executeQuery(String sqlQuery,
-            Object... parameters) throws SQLException {
+    public static List<HashMap<String, Object>> executeQuery(String sqlQuery, Object... parameters)
+            throws SQLException {
         return executeQuery("default", sqlQuery, parameters);
     }
 
