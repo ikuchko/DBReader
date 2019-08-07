@@ -129,20 +129,22 @@ public class DB {
         return connection;
     }
 
-    public static void releaseConnectionForTransaction(Connection connection) {
-        releaseConnectionForTransaction(connection, true);
+    public static boolean releaseConnectionForTransaction(Connection connection) {
+        return releaseConnectionForTransaction(connection, true);
     }
 
-    public static void releaseConnectionForTransaction(Connection connection, Boolean makeCommit) {
+    public static boolean releaseConnectionForTransaction(Connection connection, Boolean makeCommit) {
         try {
             if (makeCommit) {
                 connection.setAutoCommit(true);
+                return true;
             }
         } catch (SQLException e) {
             LOG.debug("Error releasing connection for transaction.", e);
         } finally {
             close(connection, null, null);
         }
+        return false;
     }
 
     private static List<HashMap<String, Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
