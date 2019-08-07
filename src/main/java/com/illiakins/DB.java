@@ -174,7 +174,7 @@ public class DB {
     public static List<HashMap<String, Object>> executeQuery(Connection connection, String sqlQuery)
             throws SQLException {
         if (connection == null) {
-            return null;
+            connection = getConnection("default");
         }
         Statement statement = null;
         ResultSet resultSet = null;
@@ -206,7 +206,7 @@ public class DB {
     public static List<HashMap<String, Object>> executeQuery(Connection connection, String sqlQuery,
             List<Object> params) throws SQLException {
         if (connection == null) {
-            return null;
+            connection = getConnection("default");
         }
         PreparedStatement statement = null;
         ResultSet resultSet = null;
