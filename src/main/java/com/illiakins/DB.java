@@ -205,8 +205,10 @@ public class DB {
 
     public static List<HashMap<String, Object>> executeQuery(Connection connection, String sqlQuery,
             List<Object> params) throws SQLException {
+        boolean closeConnection = false;
         if (connection == null) {
             connection = getConnection("default");
+            closeConnection = true;
         }
         PreparedStatement statement = null;
         ResultSet resultSet = null;
@@ -220,7 +222,7 @@ public class DB {
             resultSet = statement.executeQuery();
             result = resultSetToArrayList(resultSet);
         } finally {
-            close(null, statement, resultSet);
+            close(closeConnection ? connection : null, statement, resultSet);
         }
         return result;
     }
