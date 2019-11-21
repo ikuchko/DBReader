@@ -252,6 +252,12 @@ public class DB {
      * Connection must be closed in the end of all transactions by calling releaseConnectionForTransaction()
      */
     public static int executeUpdate(Connection connection, String sqlQuery, List<Object> params) throws SQLException {
+        boolean closeConnection = false;
+        if (connection == null) {
+            connection = getConnection("default");
+            closeConnection = true;
+        }
+
         PreparedStatement statement = null;
         ResultSet resultSet = null;
         int generatedKey = 0;
@@ -271,7 +277,7 @@ public class DB {
                 generatedKey = retval;
             }
         } finally {
-            close(null, statement, resultSet);
+            close(closeConnection ? connection : null, statement, resultSet);
         }
         return generatedKey;
     }
@@ -324,6 +330,11 @@ public class DB {
      */
     public static HashMap<String, Integer> executeUpdateBatch(Connection connection, String sqlQuery, String subQuery,
             List<List<Object>> paramList) throws SQLException {
+        boolean closeConnection = false;
+        if (connection == null) {
+            connection = getConnection("default");
+            closeConnection = true;
+        }
         PreparedStatement statement = null;
         ResultSet resultSet = null;
         HashMap<String, Integer> result = new HashMap<>();
@@ -361,7 +372,7 @@ public class DB {
                 result.put("id", resultSet.getInt(1));
             }
         } finally {
-            close(null, statement, null);
+            close(closeConnection ? connection : null, statement, resultSet);
         }
         return result;
     }
