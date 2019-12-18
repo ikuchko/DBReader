@@ -114,6 +114,7 @@ ehthumbs.db
 Thumbs.db
 
 #IntelliJ files
+**/.idea/jarRepositories.xml
 **/.idea/tasks.xml
 **/.idea/uiDesigner.xml
 **/.idea/codeStyleSettings.xml

@@ -25,6 +25,7 @@ import java.util.Map;
 public class DB {
     private static final Logger LOG = LoggerFactory.getLogger(DB.class);
     private static Map<String, DataSource> dataSourceHashMap = new HashMap<>();
+    private static Map<String, HikariConfig> configMap = new HashMap<>();
 
     public DB(String jdbcUrl, String userName, String password, int minimumIdle, int maxPoolSize,
             long leakDetectionThreshold, long connTimeout, long idleTimeout, long maxLifetime)
@@ -45,6 +46,7 @@ public class DB {
             config.setConnectionTimeout(connTimeout); // example default(5000) 5 seconds
             config.setIdleTimeout(idleTimeout); // example (900_000) 15 minutes
             config.setMaxLifetime(maxLifetime); // example (28_440_000) 7.9 hours
+            configMap.put("default", config);
             dataSourceHashMap.put("default", new HikariDataSource(config));
         }
     }
@@ -68,6 +70,7 @@ public class DB {
             config.setConnectionTimeout(connTimeout); // example default(5000) 5 seconds
             config.setIdleTimeout(idleTimeout); // example (900_000) 15 minutes
             config.setMaxLifetime(maxLifetime); // example (28_440_000) 7.9 hours
+            configMap.put(dataSourceName, config);
             dataSourceHashMap.put(dataSourceName, new HikariDataSource(config));
         }
     }
@@ -96,15 +99,12 @@ public class DB {
         } catch (SQLException sqlEx) {
             LOG.error("Unable to get connection from connection pool...", sqlEx);
             //last attempt to manually establish a connection
+            dataSourceHashMap.put(dataSourceName, new HikariDataSource(configMap.get(dataSourceName)));
+            dataSource = getDataSourceHashMap().get(dataSourceName);
             try {
-                Class.forName(PropertiesReader.getStringSetting("DB_DRIVER_CLASS"));
-                conn = DriverManager.getConnection(PropertiesReader.getStringSetting("DB_URL"),
-                        PropertiesReader.getStringSetting("DB_USERNAME"),
-                        PropertiesReader.getStringSetting("DB_PASSWORD"));
-
-                return conn;
-            } catch (Exception ex) {
-                LOG.error("Error connecting to the database...", ex);
+                conn = dataSource.getConnection();
+            } catch (SQLException e) {
+                LOG.error("Second attempt to get a DB connection failed...", e);
             }
         }
         return conn;
