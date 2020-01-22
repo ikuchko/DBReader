@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -87,12 +86,11 @@ public class DB {
         return getDataSource("default");
     }
 
-    private static Connection getConnection(String dataSourceName) {
+    private static Connection getConnection(String dataSourceName) throws SQLException {
         Connection conn = null;
         DataSource dataSource = getDataSourceHashMap().get(dataSourceName);
         if (dataSource == null) {
-            LOG.error("Can not obtain a DataSource by name {}", dataSourceName);
-            return null;
+            throw new SQLException("Can't obtain a DataSource from the pool by name " + dataSourceName);
         }
         try {
             conn = dataSource.getConnection();
@@ -104,17 +102,17 @@ public class DB {
             try {
                 conn = dataSource.getConnection();
             } catch (SQLException e) {
-                LOG.error("Second attempt to get a DB connection failed...", e);
+                throw new SQLException("Second attempt to get a DB connection failed...", e);
             }
         }
         return conn;
     }
 
-    public static Connection getConnectionForTransaction() {
+    public static Connection getConnectionForTransaction() throws SQLException {
         return getConnectionForTransaction("default");
     }
 
-    public static Connection getConnectionForTransaction(String dataSourceName) {
+    public static Connection getConnectionForTransaction(String dataSourceName) throws SQLException {
         Connection connection = getConnection(dataSourceName);
         if (connection == null) {
             LOG.error("Can not retrieve a connection for `{}` dataSourceName", dataSourceName);
@@ -123,24 +121,24 @@ public class DB {
         try {
             connection.setAutoCommit(false);
         } catch (SQLException e) {
-            LOG.debug("Error getting connection for transaction.", e);
-            connection = null;
+            throw new SQLException("Error getting connection for transaction.", e);
         }
         return connection;
     }
 
-    public static boolean releaseConnectionForTransaction(Connection connection) {
+    public static boolean releaseConnectionForTransaction(Connection connection) throws SQLException {
         return releaseConnectionForTransaction(connection, true);
     }
 
-    public static boolean releaseConnectionForTransaction(Connection connection, Boolean makeCommit) {
+    public static boolean releaseConnectionForTransaction(Connection connection, Boolean makeCommit)
+            throws SQLException {
         try {
             if (makeCommit) {
                 connection.setAutoCommit(true);
                 return true;
             }
         } catch (SQLException e) {
-            LOG.debug("Error releasing connection for transaction.", e);
+            throw new SQLException("Error releasing connection for transaction.", e);
         } finally {
             close(connection, null, null);
         }
@@ -452,7 +450,7 @@ public class DB {
         closeDBPool("default");
     }
 
-    public static void close(Connection connection, Statement statement, ResultSet resultSet) {
+    public static void close(Connection connection, Statement statement, ResultSet resultSet) throws SQLException {
         try {
             if (resultSet != null) {
                 resultSet.close();
@@ -464,7 +462,7 @@ public class DB {
                 connection.close();
             }
         } catch (SQLException e) {
-            LOG.error("SQL error occurred during closing a connection", e);
+            throw new SQLException("SQL error occurred during closing a connection", e);
         }
     }
 
