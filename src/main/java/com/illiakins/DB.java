@@ -86,19 +86,32 @@ public class DB {
         return getDataSource("default");
     }
 
+    public static Map<String, HikariConfig> getConfigMap() {
+        return configMap;
+    }
+
+    private static DataSource constructDataSource(String dataSourceName) throws SQLException {
+        DataSource dataSource;
+        if (!getConfigMap().containsKey(dataSourceName)) {
+            throw new SQLException("No configuration found for the name: {}", dataSourceName);
+        }
+        dataSource = new HikariDataSource(getConfigMap().get(dataSourceName));
+        getDataSourceHashMap().put(dataSourceName, dataSource);
+        return dataSource;
+    }
+
     private static Connection getConnection(String dataSourceName) throws SQLException {
-        Connection conn = null;
-        DataSource dataSource = getDataSourceHashMap().get(dataSourceName);
+        Connection conn;
+        DataSource dataSource = getDataSource(dataSourceName);
         if (dataSource == null) {
-            throw new SQLException("Can't obtain a DataSource from the pool by name " + dataSourceName);
+            dataSource = constructDataSource(dataSourceName);
         }
         try {
             conn = dataSource.getConnection();
         } catch (SQLException sqlEx) {
             LOG.error("Unable to get connection from connection pool...", sqlEx);
             //last attempt to manually establish a connection
-            dataSourceHashMap.put(dataSourceName, new HikariDataSource(configMap.get(dataSourceName)));
-            dataSource = getDataSourceHashMap().get(dataSourceName);
+            dataSource = constructDataSource(dataSourceName);
             try {
                 conn = dataSource.getConnection();
             } catch (SQLException e) {
