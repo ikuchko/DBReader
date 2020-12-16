@@ -147,10 +147,17 @@ public class DB {
             throws SQLException {
         try {
             if (makeCommit) {
-                connection.setAutoCommit(true);
+                connection.commit();
                 return true;
+            } else {
+                connection.rollback();
             }
         } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                throw new SQLException("Failed to rollback the transaction.", e);
+            }
             throw new SQLException("Error releasing connection for transaction.", e);
         } finally {
             close(connection, null, null);
